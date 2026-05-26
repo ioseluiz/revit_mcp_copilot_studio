@@ -22,15 +22,26 @@ Dado que tu suscripción de Azure no permite contenedores, usaremos el despliegu
    - `API_KEY`: Define una clave segura (ej: `my-super-secret-key-2026`). **Debe ser la misma que pondrás en el plugin de Revit.**
    - `SCM_DO_BUILD_DURING_DEPLOYMENT`: `true` (Para que Kudu instale los requirements.txt automáticamente).
 
-### Paso 3: Desplegar el Código
-1. En tu terminal local, ve a la carpeta `mcp_server_azure`.
-2. Comprime el contenido (no la carpeta, sino los archivos dentro de ella) en un archivo `deploy.zip`.
-   *Asegúrate de incluir `main.py` y `requirements.txt`.*
-3. Usa Azure CLI para subir el zip:
+### Paso 3: Desplegar el Código usando Azure Cloud Shell
+Como estás utilizando la terminal integrada en la nube de Azure (Cloud Shell), el proceso requiere que primero subas el archivo ZIP a la nube y luego ejecutes el comando.
+
+1. **Crear el ZIP en tu computadora:**
+   - Abre el Explorador de Archivos de Windows y entra a la carpeta `mcp_server_azure`.
+   - Selecciona **únicamente** los archivos necesarios: `main.py`, `revit_mcp.py`, `requirements.txt`, `temp_data.json`, `run_export.py`.
+   - Haz clic derecho sobre ellos -> **Enviar a** -> **Carpeta comprimida (en zip)** (o "Comprimir a archivo ZIP" en Windows 11).
+   - Nombra el archivo como `deploy.zip`.
+
+2. **Subir el ZIP a Azure Cloud Shell:**
+   - En el portal de Azure (navegador web), abre la terminal **Cloud Shell** (el ícono de `>_` en la barra superior).
+   - En la barra de herramientas de la terminal, haz clic en el ícono de **Upload/Download files** (Subir/Descargar archivos) que parece una flecha apuntando hacia arriba.
+   - Selecciona **Upload** y busca el archivo `deploy.zip` que acabas de crear en tu computadora. El archivo se subirá a tu directorio raíz en la nube.
+
+3. **Ejecutar el comando de despliegue:**
+   - Una vez subido, ejecuta el siguiente comando en la terminal Cloud Shell (reemplazando los nombres con los tuyos):
    ```bash
-   az webapp deployment source config-zip --resource-group TuGrupoDeRecursos --name TuNombreDeWebApp --src deploy.zip
+   az webapp deployment source config-zip --resource-group "TU_GRUPO_DE_RECURSOS" --name "NOMBRE_DE_TU_WEB_APP" --src deploy.zip
    ```
-4. Azure instalará automáticamente las dependencias (FastAPI, FastMCP, uvicorn, etc.) y ejecutará la aplicación a través de Gunicorn/Uvicorn que viene preconfigurado en el entorno Linux de Python de App Service.
+4. Azure instalará automáticamente las dependencias y ejecutará la aplicación a través de Uvicorn.
 
 *(Nota: La URL final será algo como `https://tunombre.azurewebsites.net`)*
 
