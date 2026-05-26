@@ -151,6 +151,7 @@ end;
 function ReadExistingConfig(Key: String): String;
 var
   ConfigPath: String;
+  AnsiContent: AnsiString;
   Content: String;
   StartPos, EndPos: Integer;
   SearchKey: String;
@@ -159,7 +160,9 @@ begin
   ConfigPath := ExpandConstant('{userappdata}\Autodesk\Revit\Addins\{#RevitVersion}\RevitMCPBridge\config.json');
   if not FileExists(ConfigPath) then Exit;
 
-  LoadStringFromFile(ConfigPath, Content);
+  if not LoadStringFromFile(ConfigPath, AnsiContent) then Exit;
+  Content := String(AnsiContent);
+
   SearchKey := '"' + Key + '": "';
   StartPos := Pos(SearchKey, Content);
   if StartPos = 0 then Exit;
