@@ -26,7 +26,7 @@ jobs:
         run: dotnet restore revit_plugin_azure/RevitMCPBridge.sln
 
       - name: Build Solution
-        run: dotnet build revit_plugin_azure/RevitMCPBridge.sln --configuration Release --no-restore
+        run: dotnet build revit_plugin_azure/RevitMCPBridge.sln --configuration Release -p:Platform=x64 --no-restore
 
       - name: Install Inno Setup
         run: choco install innosetup
