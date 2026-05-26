@@ -177,6 +177,34 @@ end;
 
 
 // ----------------------------------------------------------------
+// Handler del botón "Buscar..."
+// ----------------------------------------------------------------
+procedure BrowseRevitPath(Sender: TObject);
+var
+  FileName: String;
+begin
+  FileName := RevitPathEdit.Text;
+  if GetOpenFileName('Localizar Revit.exe', FileName,
+      'C:\Program Files\Autodesk',
+      'Revit Executable|Revit.exe|Todos los archivos|*.*', 'exe') then
+  begin
+    RevitPathEdit.Text := FileName;
+    if FileExists(FileName) and (CompareText(ExtractFileName(FileName), 'Revit.exe') = 0) then
+    begin
+      RevitStatusLabel.Caption := 'Revit.exe encontrado. La instalación procederá correctamente.';
+      RevitStatusLabel.Font.Color := clGreen;
+      RevitExePath := FileName;
+    end
+    else
+    begin
+      RevitStatusLabel.Caption := 'El archivo seleccionado no parece ser Revit.exe.';
+      RevitStatusLabel.Font.Color := clMaroon;
+    end;
+  end;
+end;
+
+
+// ----------------------------------------------------------------
 // Página personalizada: Revit no encontrado
 // ----------------------------------------------------------------
 procedure CreateRevitNotFoundPage;
@@ -228,34 +256,6 @@ begin
   RevitStatusLabel.Caption := '';
 
   RevitPageCreated := True;
-end;
-
-
-// ----------------------------------------------------------------
-// Handler del botón "Buscar..."
-// ----------------------------------------------------------------
-procedure BrowseRevitPath(Sender: TObject);
-var
-  FileName: String;
-begin
-  FileName := RevitPathEdit.Text;
-  if GetOpenFileName('Localizar Revit.exe', FileName,
-      'C:\Program Files\Autodesk',
-      'Revit Executable|Revit.exe|Todos los archivos|*.*', 'exe') then
-  begin
-    RevitPathEdit.Text := FileName;
-    if FileExists(FileName) and (CompareText(ExtractFileName(FileName), 'Revit.exe') = 0) then
-    begin
-      RevitStatusLabel.Caption := 'Revit.exe encontrado. La instalación procederá correctamente.';
-      RevitStatusLabel.Font.Color := clGreen;
-      RevitExePath := FileName;
-    end
-    else
-    begin
-      RevitStatusLabel.Caption := 'El archivo seleccionado no parece ser Revit.exe.';
-      RevitStatusLabel.Font.Color := clMaroon;
-    end;
-  end;
 end;
 
 

@@ -29,13 +29,12 @@ jobs:
         run: dotnet build revit_plugin_azure/RevitMCPBridge.sln --configuration Release -p:Platform=x64 --no-restore
 
       - name: Install Inno Setup
-        run: choco install innosetup
+        run: choco install innosetup -y --no-progress
 
       - name: Compile Installer
+        shell: pwsh
         run: |
-          # Extraer versión del tag (ej. v1.2.3 -> 1.2.3)
           $VERSION = "${{ github.ref_name }}".TrimStart('v')
-          # Ejecutar el compilador de Inno Setup (usando la ruta completa de choco)
           & "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" /DAppVersion=$VERSION revit_plugin_azure/installer/installer.iss
 
       - name: Create Release
