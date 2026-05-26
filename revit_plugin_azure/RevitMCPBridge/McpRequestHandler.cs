@@ -67,7 +67,6 @@ namespace RevitMCPBridge
                             break;
 
                         case "get_elements_with_params":
-                            string catName = currentTask.Request.Payload.GetProperty("category").GetString();
                             List<string> paramsToFind = new();
 
                             if (currentTask.Request.Payload.TryGetProperty("parameters", out JsonElement paramsJson))
@@ -76,10 +75,42 @@ namespace RevitMCPBridge
                                     paramsToFind.Add(p.GetString());
                             }
 
-                            if (Enum.TryParse(catName, out BuiltInCategory bic))
-                                resultJson = GetElementsAndParams(doc, bic, paramsToFind);
+                            var resultList = new List<Dictionary<string, object>>();
+
+                            if (currentTask.Request.Payload.TryGetProperty("categories", out JsonElement catsJson))
+                            {
+                                foreach (var catElement in catsJson.EnumerateArray())
+                                {
+                                    string catName = catElement.GetString();
+                                    bool onlyCurtainWalls = catName == "OST_Walls_Curtain";
+                                    string technicalCat = onlyCurtainWalls ? "OST_Walls" : catName;
+
+                                    if (Enum.TryParse(technicalCat, out BuiltInCategory bic))
+                                    {
+                                        resultList.AddRange(GetElementsAndParams(doc, bic, paramsToFind, onlyCurtainWalls));
+                                    }
+                                }
+                                resultJson = JsonSerializer.Serialize(resultList);
+                            }
+                            else if (currentTask.Request.Payload.TryGetProperty("category", out JsonElement singleCatJson))
+                            {
+                                string catName = singleCatJson.GetString();
+                                bool onlyCurtainWalls = catName == "OST_Walls_Curtain";
+                                string technicalCat = onlyCurtainWalls ? "OST_Walls" : catName;
+
+                                if (Enum.TryParse(technicalCat, out BuiltInCategory bic))
+                                {
+                                    resultJson = JsonSerializer.Serialize(GetElementsAndParams(doc, bic, paramsToFind, onlyCurtainWalls));
+                                }
+                                else
+                                {
+                                    resultJson = JsonSerializer.Serialize(new { error = $"Categoría inválida: {catName}" });
+                                }
+                            }
                             else
-                                resultJson = JsonSerializer.Serialize(new { error = $"Categoría inválida: {catName}" });
+                            {
+                                resultJson = JsonSerializer.Serialize(new { error = "Falta parámetro 'category' o 'categories'" });
+                            }
                             break;
 
                         case "get_concrete_volume":
@@ -157,33 +188,60 @@ namespace RevitMCPBridge
 
         // --- MÉTODOS DE CONSULTA (LECTURA) ---
 
-        private static string GetElementsAndParams(Document doc, BuiltInCategory bic, List<string> paramNames)
+        private static List<Dictionary<string, object>> GetElementsAndParams(Document doc, BuiltInCategory bic, List<string> paramNames, bool onlyCurtainWalls = false)
         {
-            var elements = new FilteredElementCollector(doc)
+            var collector = new FilteredElementCollector(doc)
                 .OfCategory(bic)
-                .WhereElementIsNotElementType()
-                .ToElements();
+                .WhereElementIsNotElementType();
 
+            var elements = collector.ToElements();
             var list = new List<Dictionary<string, object>>();
 
             foreach (Element e in elements)
             {
+                // Filtro especial para Muros Cortina
+                if (onlyCurtainWalls && e is Wall wall && wall.WallType.Kind != WallKind.Curtain)
+                    continue;
+
+                // Detección robusta de Nivel (soporta MEP y estructurales)
+                string levelName = "N/A";
+                if (e.LevelId != ElementId.InvalidElementId)
+                {
+                    levelName = doc.GetElement(e.LevelId)?.Name;
+                }
+                else
+                {
+                    Parameter pLevel = e.get_Parameter(BuiltInParameter.FAMILY_LEVEL_PARAM) 
+                                    ?? e.get_Parameter(BuiltInParameter.SCHEDULE_LEVEL_PARAM)
+                                    ?? e.get_Parameter(BuiltInParameter.INSTANCE_REFERENCE_LEVEL_PARAM);
+                    if (pLevel != null && pLevel.HasValue) levelName = pLevel.AsValueString();
+                }
+
                 var data = new Dictionary<string, object>
                 {
                     ["Id"] = e.Id.Value,
                     ["Name"] = e.Name,
-                    ["Level"] = (e.LevelId != ElementId.InvalidElementId) ? doc.GetElement(e.LevelId)?.Name : "N/A"
+                    ["Level"] = levelName ?? "N/A"
                 };
 
+                bool hasAnyValue = false;
                 foreach (string paramName in paramNames)
                 {
-                    data[paramName] = GetParameterValue(e, paramName);
+                    string val = GetParameterValue(e, paramName);
+                    data[paramName] = val;
+                    if (!string.IsNullOrWhiteSpace(val) && val != "0" && val != "N/A" && val != "None" && val != "null")
+                    {
+                        hasAnyValue = true;
+                    }
                 }
 
-                list.Add(data);
+                if (hasAnyValue)
+                {
+                    list.Add(data);
+                }
             }
 
-            return JsonSerializer.Serialize(list);
+            return list;
         }
 
         // Método para obtener la información de los niveles existentes

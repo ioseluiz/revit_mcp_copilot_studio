@@ -1,27 +1,34 @@
-﻿<Project Sdk="Microsoft.NET.Sdk">
+<Project Sdk="Microsoft.NET.Sdk">
 
-	<PropertyGroup>
-		<TargetFramework>net8.0-windows</TargetFramework>
+  <PropertyGroup>
+    <TargetFramework>net8.0-windows</TargetFramework>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>disable</Nullable>
+    <UseWPF>true</UseWPF>
+    <UseWindowsForms>true</UseWindowsForms>
+    <Platforms>x64</Platforms>
+    <AssemblyVersion>1.0.0.0</AssemblyVersion>
+    <FileVersion>1.0.0.0</FileVersion>
+    <!-- Evita que las DLLs de Revit se copien al output (ya están en el host) -->
+    <CopyLocalLockFileAssemblies>false</CopyLocalLockFileAssemblies>
+  </PropertyGroup>
 
-		<ImplicitUsings>enable</ImplicitUsings>
-
-		<Nullable>disable</Nullable>
-
-		<UseWPF>true</UseWPF>
-		<UseWindowsForms>true</UseWindowsForms>
-
-		<Platforms>x64</Platforms>
-	</PropertyGroup>
-
-  <ItemGroup>
+  <!-- Referencias locales cuando Revit está instalado (desarrollo local) -->
+  <ItemGroup Condition="Exists('C:\Program Files\Autodesk\Revit 2025\RevitAPI.dll')">
     <Reference Include="RevitAPI">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2025\RevitAPI.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Revit 2025\RevitAPI.dll</HintPath>
       <Private>False</Private>
     </Reference>
     <Reference Include="RevitAPIUI">
-      <HintPath>..\..\..\..\..\..\..\..\Program Files\Autodesk\Revit 2025\RevitAPIUI.dll</HintPath>
+      <HintPath>C:\Program Files\Autodesk\Revit 2025\RevitAPIUI.dll</HintPath>
       <Private>False</Private>
     </Reference>
+  </ItemGroup>
+
+  <!-- NuGet packages cuando Revit no está instalado (CI/CD en GitHub Actions) -->
+  <ItemGroup Condition="!Exists('C:\Program Files\Autodesk\Revit 2025\RevitAPI.dll')">
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPI" Version="2025.*" />
+    <PackageReference Include="Nice3point.Revit.Api.RevitAPIUI" Version="2025.*" />
   </ItemGroup>
 
 </Project>

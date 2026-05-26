@@ -1,0 +1,47 @@
+name: Release Revit Plugin
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  build:
+    name: Build and Release
+    runs-on: windows-latest
+    
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Setup .NET
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.0.x'
+
+      - name: Restore dependencies
+        run: dotnet restore revit_plugin_azure/RevitMCPBridge.sln
+
+      - name: Build Solution
+        run: dotnet build revit_plugin_azure/RevitMCPBridge.sln --configuration Release --no-restore
+
+      - name: Install Inno Setup
+        uses: scottbrenner/install-inno-setup@v5.1.3
+
+      - name: Compile Installer
+        run: |
+          # Extraer versión del tag (ej. v1.2.3 -> 1.2.3)
+          $VERSION = "${{ github.ref_name }}".TrimStart('v')
+          # Ejecutar el compilador de Inno Setup
+          ISCC /DAppVersion=$VERSION revit_plugin_azure/installer/installer.iss
+
+      - name: Create Release
+        id: create_release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: revit_plugin_azure/installer/Output/RevitMCPBridge-Setup-*.exe
+          draft: false
+          prerelease: false
+          generate_release_notes: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RevitAddIns>
+  <AddIn Type="Application">
+    <Name>RevitMCPBridge</Name>
+    <Assembly>RevitMCPBridge\RevitMCPBridge.dll</Assembly>
+    <FullClassName>RevitMCPBridge.App</FullClassName>
+    <ClientId>32104567-89AB-4CDE-AF01-23456789ABCD</ClientId>
+    <VendorId>INIO</VendorId>
+    <VendorDescription>INIO-CE</VendorDescription>
+  </AddIn>
+</RevitAddIns>
